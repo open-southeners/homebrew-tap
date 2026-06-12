@@ -24,12 +24,14 @@ You can then install any available formula or cask.
 | Package | Description | Install |
 | --- | --- | --- |
 | [ContainerApp](https://github.com/open-southeners/ContainerApp) | Native macOS interface for Apple's container CLI | `brew install --cask container-app` |
+| [File Association Manager](https://github.com/open-southeners/fileassocmanager) | Manage default applications for file types | `brew install --cask file-assoc-manager` |
 
 Packages can also be installed without explicitly adding the tap:
 
 ```sh
 brew install open-southeners/tap/rcomp
 brew install --cask open-southeners/tap/container-app
+brew install --cask open-southeners/tap/file-assoc-manager
 ```
 
 ## Updating
@@ -60,6 +62,7 @@ Before submitting a change, run the relevant Homebrew checks:
 ```sh
 brew audit --strict --online open-southeners/tap/rcomp
 brew audit --strict --online --cask open-southeners/tap/container-app
+brew audit --strict --online --cask open-southeners/tap/file-assoc-manager
 brew test open-southeners/tap/rcomp
 ```
 
