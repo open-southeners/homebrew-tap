@@ -1,6 +1,6 @@
 cask "container-app" do
-  version "1.2.0"
-  sha256 "840f14e7aa6f2c077137ef78cf94dda4ba1ffc926302ca8da30a9ecd77f77a26"
+  version "1.3.0"
+  sha256 "d893b365be5b1ad5d5a4a2eafe0c46f072e9cea10cc880d09e0a06d7cbe1d171"
 
   url "https://github.com/open-southeners/ContainerApp/releases/download/#{version}/ContainerApp-#{version}.zip"
   name "Container App"
