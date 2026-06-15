@@ -7,7 +7,7 @@ ROOT := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 FORMULA := $(TAP)/rcomp
 CASK := $(TAP)/container-app
 
-RCOMP_VERSION ?= 0.1.0
+RCOMP_VERSION ?= 0.2.0
 RCOMP_URL := https://github.com/open-southeners/rcomp/archive/refs/tags/v$(RCOMP_VERSION).tar.gz
 URL ?= $(RCOMP_URL)
 
