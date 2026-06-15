@@ -25,7 +25,7 @@ You can then install any available formula or cask.
 | --- | --- | --- |
 | [ContainerApp](https://github.com/open-southeners/ContainerApp) | Native macOS interface for Apple's container CLI | `brew install --cask container-app` |
 | [File Association Manager](https://github.com/open-southeners/fileassocmanager) | Manage default applications for file types | `brew install --cask file-assoc-manager` |
-| [RComp Desktop](https://github.com/open-southeners/rcomp) | Compress and extract archives from a desktop app | `brew install --cask rcomp` |
+| [RComp Desktop](https://github.com/open-southeners/rcomp) | Compress and extract archives on macOS and Linux | `brew install --cask rcomp` |
 
 Packages can also be installed without explicitly adding the tap:
 
