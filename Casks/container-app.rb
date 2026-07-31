@@ -9,6 +9,7 @@ cask "container-app" do
 
   depends_on arch: :arm64
   depends_on macos: :sequoia
+  depends_on formula: "container-compose"
   depends_on formula: "container"
 
   app "ContainerApp.app"
