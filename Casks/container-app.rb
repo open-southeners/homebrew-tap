@@ -8,7 +8,7 @@ cask "container-app" do
   homepage "https://github.com/open-southeners/ContainerApp"
 
   depends_on arch: :arm64
-  depends_on macos: :sequoia
+  depends_on macos: ">= :tahoe"
   depends_on formula: "container-compose"
   depends_on formula: "container"
 
