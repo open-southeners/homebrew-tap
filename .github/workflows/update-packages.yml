@@ -1,0 +1,96 @@
+name: Update packages
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package key from .github/packages.yml (blank updates all)
+        required: false
+        type: string
+  repository_dispatch:
+    types: [package-released]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-homebrew-packages
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: macos-15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REQUESTED_PACKAGE: ${{ inputs.package || github.event.client_payload.package || '' }}
+      APP_ID: ${{ secrets.HOMEBREW_UPDATER_APP_ID }}
+    steps:
+      - name: Create GitHub App token
+        if: env.APP_ID != ''
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.HOMEBREW_UPDATER_APP_ID }}
+          private-key: ${{ secrets.HOMEBREW_UPDATER_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || github.token }}
+
+      - name: Update formulae and casks
+        shell: bash
+        run: |
+          args=()
+          if [[ -n "$REQUESTED_PACKAGE" ]]; then
+            args+=(--package "$REQUESTED_PACKAGE")
+          fi
+          ruby scripts/update-packages "${args[@]}"
+
+      - name: Check whether anything changed
+        id: changes
+        shell: bash
+        run: |
+          if git diff --quiet -- Formula Casks; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate changes
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          brew style Formula Casks
+          brew tap open-southeners/tap "$GITHUB_WORKSPACE"
+          brew audit --strict --formula open-southeners/tap/lambdary open-southeners/tap/rcomp
+          brew audit --strict --cask open-southeners/tap/container-app open-southeners/tap/file-assoc-manager open-southeners/tap/gltfquicklook open-southeners/tap/rcomp
+
+      - name: Create or refresh update pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
+        shell: bash
+        run: |
+          branch="automation/update-packages"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add Formula Casks
+          git commit -m "chore: update Homebrew packages"
+          git fetch origin "$branch:refs/remotes/origin/$branch" || true
+          git push --force-with-lease origin "HEAD:$branch"
+
+          if gh pr view "$branch" >/dev/null 2>&1; then
+            gh pr edit "$branch" \
+              --title "chore: update Homebrew packages" \
+              --body "Automated version, release URL, and SHA-256 updates."
+          else
+            gh pr create \
+              --base "${{ github.event.repository.default_branch }}" \
+              --head "$branch" \
+              --title "chore: update Homebrew packages" \
+              --body "Automated version, release URL, and SHA-256 updates."
+          fi

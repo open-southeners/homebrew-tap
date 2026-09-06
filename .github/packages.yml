@@ -1,0 +1,50 @@
+packages:
+  lambdary:
+    repository: open-southeners/lambdary
+    file: Formula/lambdary.rb
+    tag_prefix: ""
+    update: binary_formula
+    assets:
+      - lambdary_{version}_darwin_amd64.tar.gz
+      - lambdary_{version}_darwin_arm64.tar.gz
+      - lambdary_{version}_linux_amd64.tar.gz
+      - lambdary_{version}_linux_arm64.tar.gz
+
+  rcomp-formula:
+    repository: open-southeners/rcomp
+    file: Formula/rcomp.rb
+    tag_prefix: v
+    update: source_archive
+
+  container-app:
+    repository: open-southeners/ContainerApp
+    file: Casks/container-app.rb
+    tag_prefix: ""
+    update: cask
+    assets:
+      - ContainerApp-{version}.zip
+
+  file-assoc-manager:
+    repository: open-southeners/fileassocmanager
+    file: Casks/file-assoc-manager.rb
+    tag_prefix: ""
+    update: cask
+    assets:
+      - FileAssocManager.app.zip
+
+  gltfquicklook:
+    repository: open-southeners/GLTFQuickLook
+    file: Casks/gltfquicklook.rb
+    tag_prefix: ""
+    update: cask
+    assets:
+      - GLTFQuickLook.dmg
+
+  rcomp-cask:
+    repository: open-southeners/rcomp
+    file: Casks/rcomp.rb
+    tag_prefix: v
+    update: cask
+    assets:
+      - Rcomp_{version}_universal.dmg
+      - Rcomp_{version}_amd64.AppImage

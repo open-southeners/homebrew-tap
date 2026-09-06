@@ -1,0 +1,216 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "digest"
+require "json"
+require "net/http"
+require "optparse"
+require "tempfile"
+require "uri"
+require "yaml"
+
+ROOT = File.expand_path("..", __dir__)
+CONFIG_PATH = File.join(ROOT, ".github/packages.yml")
+SHA_LINE = /^(\s*sha256(?:\s+\w+:)?\s+")[0-9a-f]{64}(".*)$/
+
+class UpdateError < StandardError; end
+
+def http_request(uri, limit: 5)
+  raise UpdateError, "too many redirects for #{uri}" if limit.zero?
+
+  http_get = Net::HTTP::Get.new(uri)
+  http_get["Accept"] = "application/vnd.github+json"
+  http_get["User-Agent"] = "open-southeners-homebrew-tap-updater"
+  http_get["X-GitHub-Api-Version"] = "2022-11-28"
+  token = ENV["GH_TOKEN"] || ENV["GITHUB_TOKEN"]
+  http_get["Authorization"] = "Bearer #{token}" unless token.to_s.empty?
+
+  response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == "https") do |http|
+    http.request(http_get)
+  end
+
+  case response
+  when Net::HTTPSuccess
+    response
+  when Net::HTTPRedirection
+    location = response["location"]
+    raise UpdateError, "redirect from #{uri} did not include a location" unless location
+
+    http_request(URI.join(uri, location), limit: limit - 1)
+  else
+    raise UpdateError, "GET #{uri} returned #{response.code}: #{response.body.to_s[0, 300]}"
+  end
+end
+
+def latest_release(repository)
+  uri = URI("https://api.github.com/repos/#{repository}/releases/latest")
+  JSON.parse(http_request(uri).body)
+rescue JSON::ParserError => e
+  raise UpdateError, "invalid release response for #{repository}: #{e.message}"
+end
+
+def sha256(url)
+  Tempfile.create("homebrew-release") do |file|
+    downloaded = system(
+      "curl", "--fail", "--location", "--silent", "--show-error",
+      "--output", file.path, url,
+    )
+    raise UpdateError, "could not download #{url}" unless downloaded
+
+    Digest::SHA256.file(file.path).hexdigest
+  end
+end
+
+def replace_sha_lines(contents, hashes, package)
+  index = 0
+  updated = contents.gsub(SHA_LINE) do
+    next Regexp.last_match(0) if index >= hashes.length
+
+    value = "#{Regexp.last_match(1)}#{hashes.fetch(index)}#{Regexp.last_match(2)}"
+    index += 1
+    value
+  end
+
+  count = contents.scan(SHA_LINE).length
+  unless count == hashes.length && index == hashes.length
+    raise UpdateError,
+          "#{package}: configured #{hashes.length} artifact(s), but found #{count} SHA-256 stanza(s)"
+  end
+
+  updated
+end
+
+def replace_version(contents, version, package)
+  matches = contents.scan(/^\s*version\s+"[^"]+"\s*$/).length
+  raise UpdateError, "#{package}: expected one version stanza, found #{matches}" unless matches == 1
+
+  contents.sub(/^(\s*version\s+")[^"]+("\s*)$/, "\\1#{version}\\2")
+end
+
+def release_assets(release, patterns, version, package)
+  available = release.fetch("assets", []).to_h { |asset| [asset.fetch("name"), asset] }
+
+  patterns.map do |pattern|
+    name = pattern.gsub("{version}", version)
+    asset = available[name]
+    raise UpdateError, "#{package}: release is missing asset #{name}" unless asset
+
+    [asset.fetch("browser_download_url"), sha256(asset.fetch("browser_download_url"))]
+  end
+end
+
+def validate_package(name, package)
+  path = File.expand_path(package.fetch("file"), ROOT)
+  unless path.start_with?("#{ROOT}/") && File.file?(path)
+    raise UpdateError, "#{name}: file does not exist inside the tap: #{package['file']}"
+  end
+
+  contents = File.read(path)
+  strategy = package.fetch("update")
+  assets = package["assets"] || []
+  expected_hashes = strategy == "source_archive" ? 1 : assets.length
+  actual_hashes = contents.scan(SHA_LINE).length
+  unless actual_hashes == expected_hashes
+    raise UpdateError, "#{name}: expected #{expected_hashes} SHA-256 stanza(s), found #{actual_hashes}"
+  end
+
+  case strategy
+  when "source_archive"
+    urls = contents.scan(/^\s*url\s+"[^"]+"\s*$/).length
+    raise UpdateError, "#{name}: expected one URL stanza, found #{urls}" unless urls == 1
+  when "binary_formula"
+    urls = contents.scan(/^\s*url\s+"[^"]+"\s*$/).length
+    raise UpdateError, "#{name}: expected #{assets.length} URL stanzas, found #{urls}" unless urls == assets.length
+  when "cask"
+    versions = contents.scan(/^\s*version\s+"[^"]+"\s*$/).length
+    raise UpdateError, "#{name}: expected one version stanza, found #{versions}" unless versions == 1
+  else
+    raise UpdateError, "#{name}: unknown update strategy #{strategy.inspect}"
+  end
+
+  raise UpdateError, "#{name}: missing assets" if strategy != "source_archive" && assets.empty?
+end
+
+def update_package(name, package)
+  release = latest_release(package.fetch("repository"))
+  tag = release.fetch("tag_name")
+  prefix = package.fetch("tag_prefix", "")
+  unless prefix.empty? || tag.start_with?(prefix)
+    raise UpdateError, "#{name}: tag #{tag.inspect} does not start with #{prefix.inspect}"
+  end
+
+  version = prefix.empty? ? tag : tag.delete_prefix(prefix)
+  raise UpdateError, "#{name}: empty version derived from tag #{tag.inspect}" if version.empty?
+
+  path = File.join(ROOT, package.fetch("file"))
+  original = File.read(path)
+
+  updated = case package.fetch("update")
+            when "source_archive"
+              url = "https://github.com/#{package.fetch('repository')}/archive/refs/tags/#{tag}.tar.gz"
+              hash = sha256(url)
+              url_count = original.scan(/^\s*url\s+"[^"]+"\s*$/).length
+              raise UpdateError, "#{name}: expected one URL stanza, found #{url_count}" unless url_count == 1
+
+              replace_sha_lines(original.sub(/^(\s*url\s+")[^"]+("\s*)$/, "\\1#{url}\\2"), [hash], name)
+            when "binary_formula"
+              assets = release_assets(release, package.fetch("assets"), version, name)
+              urls = assets.map(&:first)
+              index = 0
+              changed = original.gsub(/^(\s*url\s+")[^"]+("\s*)$/) do
+                raise UpdateError, "#{name}: found more URL stanzas than configured assets" if index >= urls.length
+
+                value = "#{Regexp.last_match(1)}#{urls.fetch(index)}#{Regexp.last_match(2)}"
+                index += 1
+                value
+              end
+              unless index == urls.length
+                raise UpdateError, "#{name}: configured #{urls.length} assets, but found #{index} URL stanzas"
+              end
+
+              replace_sha_lines(changed, assets.map(&:last), name)
+            when "cask"
+              assets = release_assets(release, package.fetch("assets"), version, name)
+              replace_sha_lines(replace_version(original, version, name), assets.map(&:last), name)
+            else
+              raise UpdateError, "#{name}: unknown update strategy #{package['update'].inspect}"
+            end
+
+  if updated == original
+    puts "#{name}: already at #{version}"
+  else
+    File.write(path, updated)
+    puts "#{name}: updated to #{version}"
+  end
+end
+
+options = { packages: [] }
+OptionParser.new do |parser|
+  parser.banner = "Usage: scripts/update-packages [--package NAME] [--check-config]"
+  parser.on("--package NAME", "Update only NAME (may be repeated)") { |name| options[:packages] << name }
+  parser.on("--check-config", "Validate the manifest and local files without using the network") do
+    options[:check_config] = true
+  end
+end.parse!
+
+begin
+  config = YAML.safe_load(File.read(CONFIG_PATH)).fetch("packages")
+  selected = options[:packages].empty? ? config.keys : options[:packages]
+  unknown = selected - config.keys
+  raise UpdateError, "unknown package(s): #{unknown.join(', ')}" unless unknown.empty?
+
+  if options[:check_config]
+    config.each { |name, package| validate_package(name, package) }
+    puts "Package manifest is valid (#{config.length} entries)"
+    exit
+  end
+
+  selected.each do |name|
+    package = config.fetch(name)
+    validate_package(name, package)
+    update_package(name, package)
+  end
+rescue KeyError, UpdateError => e
+  warn "update-packages: #{e.message}"
+  exit 1
+end

@@ -49,6 +49,39 @@ brew update
 brew upgrade
 ```
 
+Package versions, release URLs, and SHA-256 values are checked automatically
+every six hours. Updates are proposed as pull requests and validated with
+Homebrew's style and audit checks before merging. The package-to-release-asset
+mapping lives in [`.github/packages.yml`](.github/packages.yml).
+
+### Package update automation
+
+The `Update packages` workflow can also be run manually for one manifest key.
+To add another package, add its repository, formula or cask path, update
+strategy, tag prefix, and ordered release asset names to the manifest. Asset
+order must match the order of the `sha256` stanzas in the Ruby file.
+
+The workflow can create pull requests with the repository `GITHUB_TOKEN` when
+**Settings → Actions → General → Allow GitHub Actions to create and approve
+pull requests** is enabled. For pull-request checks to trigger without manual
+approval, configure a GitHub App with Contents and Pull requests read/write
+access and add its credentials as `HOMEBREW_UPDATER_APP_ID` and
+`HOMEBREW_UPDATER_PRIVATE_KEY` secrets.
+
+Project release workflows may request an immediate update by sending a
+`repository_dispatch` event of type `package-released` with this payload:
+
+```json
+{
+  "package": "lambdary"
+}
+```
+
+Cross-repository dispatches require a GitHub App installation token or another
+token with access to this tap; a source repository's standard `GITHUB_TOKEN`
+cannot access a different repository. The scheduled run remains the fallback
+if no dispatch is configured.
+
 ## Removing the Tap
 
 ```sh
