@@ -7,6 +7,11 @@ cask "gltfquicklook" do
   desc "Quick Look previews and thumbnails for glTF and GLB files"
   homepage "https://github.com/open-southeners/GLTFQuickLook"
 
+  livecheck do
+    url :homepage
+    strategy :github_latest
+  end
+
   depends_on macos: :monterey
 
   app "GLTFQuickLook.app"

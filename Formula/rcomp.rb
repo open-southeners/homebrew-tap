@@ -5,6 +5,11 @@ class Rcomp < Formula
   sha256 "7457fb2d93549d533e7e8d0747d31cb27e5ba7420bd7a35ac3b6a22ba74f461c"
   license any_of: ["MIT", "Apache-2.0"]
 
+  livecheck do
+    url :homepage
+    strategy :github_latest
+  end
+
   depends_on "rust" => :build
 
   def install
@@ -17,7 +22,6 @@ class Rcomp < Formula
     generate_completions_from_executable(
       bin/"rcomp",
       "completions",
-      shells: [:bash, :zsh, :fish],
     )
 
     (man1/"rcomp.1").write shell_output("#{bin}/rcomp man")

@@ -7,8 +7,13 @@ cask "container-app" do
   desc "Native interface for Apple's container CLI"
   homepage "https://github.com/open-southeners/ContainerApp"
 
+  livecheck do
+    url :homepage
+    strategy :github_latest
+  end
+
   depends_on arch: :arm64
-  depends_on macos: ">= :tahoe"
+  depends_on macos: :tahoe
   depends_on formula: "container-compose"
   depends_on formula: "container"
 

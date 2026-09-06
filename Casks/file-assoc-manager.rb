@@ -7,6 +7,11 @@ cask "file-assoc-manager" do
   desc "Manage default applications for file types"
   homepage "https://github.com/open-southeners/fileassocmanager"
 
+  livecheck do
+    url :homepage
+    strategy :github_latest
+  end
+
   depends_on macos: :ventura
 
   app "FileAssocManager.app"
