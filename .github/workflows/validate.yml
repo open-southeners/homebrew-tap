@@ -1,0 +1,27 @@
+name: Validate tap
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate updater configuration
+        run: |
+          ruby -c scripts/update-packages
+          ruby scripts/update-packages --check-config
+
+      - name: Check style and definitions
+        run: |
+          brew style Formula Casks
+          brew tap open-southeners/tap "$GITHUB_WORKSPACE"
+          brew audit --strict --formula open-southeners/tap/lambdary open-southeners/tap/rcomp
+          brew audit --strict --cask open-southeners/tap/container-app open-southeners/tap/file-assoc-manager open-southeners/tap/gltfquicklook open-southeners/tap/rcomp
