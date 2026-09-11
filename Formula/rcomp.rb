@@ -1,8 +1,8 @@
 class Rcomp < Formula
   desc "Compression and archive tool supporting multiple formats"
   homepage "https://github.com/open-southeners/rcomp"
-  url "https://github.com/open-southeners/rcomp/archive/refs/tags/v0.2.0.tar.gz"
-  sha256 "7457fb2d93549d533e7e8d0747d31cb27e5ba7420bd7a35ac3b6a22ba74f461c"
+  url "https://github.com/open-southeners/rcomp/archive/refs/tags/v0.3.2.tar.gz"
+  sha256 "362a9be01f727accbbb9d49cac01bcc7531bd5be15ea59708132b63a20b4f07c"
   license any_of: ["MIT", "Apache-2.0"]
 
   livecheck do
