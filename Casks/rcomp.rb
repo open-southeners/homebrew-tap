@@ -1,10 +1,10 @@
 cask "rcomp" do
   os macos: "universal.dmg", linux: "amd64.AppImage"
 
-  version "0.2.0"
+  version "0.3.2"
 
   on_macos do
-    sha256 "748b98a0e49bbf04b0212d65f3f6b9815796cdd103ee6f1c015d96803a996245"
+    sha256 "7fe9050a8b41bb20de93a77839952bb7f9ad03ab2d4ffa622095aa17d9cf59c4"
   end
   on_macos do
     app "Rcomp.app"
@@ -16,7 +16,7 @@ cask "rcomp" do
     ]
   end
   on_linux do
-    sha256 x86_64_linux: "d326f837abcb88d4abf9b58a76048ab85656cab63dc8cb2e7ea0481c46621817"
+    sha256 x86_64_linux: "3bd58dafd978c23b3a5442f8f570dc40bc239278b9481324756d851c9c3f779b"
   end
   on_linux do
     depends_on arch: :x86_64
