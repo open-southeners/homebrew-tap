@@ -1,8 +1,8 @@
 class Rcomp < Formula
   desc "Compression and archive tool supporting multiple formats"
   homepage "https://github.com/open-southeners/rcomp"
-  url "https://github.com/open-southeners/rcomp/archive/refs/tags/v0.2.0.tar.gz"
-  sha256 "7457fb2d93549d533e7e8d0747d31cb27e5ba7420bd7a35ac3b6a22ba74f461c"
+  url "https://github.com/open-southeners/rcomp/archive/refs/tags/v0.4.0.tar.gz"
+  sha256 "db12e2ca6535978225532d2c4b4e5f3eccfac7d754db566efb96f7d704cb9a64"
   license any_of: ["MIT", "Apache-2.0"]
 
   livecheck do
@@ -24,7 +24,7 @@ class Rcomp < Formula
       "completions",
     )
 
-    (man1/"rcomp.1").write shell_output("#{bin}/rcomp man")
+    (man1/"rcomp.1").write Utils.safe_popen_read(bin/"rcomp", "man")
   end
 
   test do

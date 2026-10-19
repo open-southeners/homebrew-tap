@@ -1,6 +1,6 @@
 cask "container-app" do
-  version "1.3.0"
-  sha256 "d893b365be5b1ad5d5a4a2eafe0c46f072e9cea10cc880d09e0a06d7cbe1d171"
+  version "1.4.0"
+  sha256 "91c6e7ee6dd3c7bfe9d516a42c6f8fd662d3e49106ca42a8f2316a869938e56c"
 
   url "https://github.com/open-southeners/ContainerApp/releases/download/#{version}/ContainerApp-#{version}.zip"
   name "Container App"
@@ -13,9 +13,9 @@ cask "container-app" do
   end
 
   depends_on arch: :arm64
-  depends_on macos: :tahoe
-  depends_on formula: "container-compose"
   depends_on formula: "container"
+  depends_on formula: "container-compose"
+  depends_on macos: :tahoe
 
   app "ContainerApp.app"
 

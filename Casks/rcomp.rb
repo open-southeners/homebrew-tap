@@ -1,10 +1,10 @@
 cask "rcomp" do
-  os macos: "universal.dmg", linux: "amd64.AppImage"
+  os macos: "macos-universal.dmg", linux: "linux-x86_64.AppImage"
 
-  version "0.2.0"
+  version "0.4.0"
 
   on_macos do
-    sha256 "748b98a0e49bbf04b0212d65f3f6b9815796cdd103ee6f1c015d96803a996245"
+    sha256 "db03176756a4766faa9cc593be47349604ee5f3d14bf2b49a61a9020c24c8432"
   end
   on_macos do
     app "Rcomp.app"
@@ -16,15 +16,15 @@ cask "rcomp" do
     ]
   end
   on_linux do
-    sha256 x86_64_linux: "d326f837abcb88d4abf9b58a76048ab85656cab63dc8cb2e7ea0481c46621817"
+    sha256 x86_64_linux: "1c3e79cb966fb8c2da10aed953d8cfdfded13e50e522715037a7887ef6f3de18"
   end
   on_linux do
     depends_on arch: :x86_64
 
-    app_image "Rcomp_#{version}_amd64.AppImage", target: "Rcomp.AppImage"
+    app_image "rcomp-desktop_#{version}_linux-x86_64.AppImage", target: "Rcomp.AppImage"
   end
 
-  url "https://github.com/open-southeners/rcomp/releases/download/v#{version}/Rcomp_#{version}_#{os}"
+  url "https://github.com/open-southeners/rcomp/releases/download/v#{version}/rcomp-desktop_#{version}_#{os}"
   name "RComp Desktop"
   desc "Desktop app for compressing and extracting archives"
   homepage "https://github.com/open-southeners/rcomp"
