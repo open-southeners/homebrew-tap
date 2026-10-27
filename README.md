@@ -17,6 +17,7 @@ You can then install any available formula or cask.
 
 | Package | Description | Install |
 | --- | --- | --- |
+| [ki](https://github.com/open-southeners/ki) | Command-line client for Kiarga and the ki server agent | `brew install ki` |
 | [lambdary](https://github.com/open-southeners/lambdary) | Local development server for AWS Lambda functions | `brew install lambdary` |
 | [rcomp](https://github.com/open-southeners/rcomp) | Compression and archive tool supporting multiple formats | `brew install rcomp` |
 
@@ -32,6 +33,7 @@ You can then install any available formula or cask.
 Packages can also be installed without explicitly adding the tap:
 
 ```sh
+brew install open-southeners/tap/ki
 brew install open-southeners/tap/lambdary
 brew install open-southeners/tap/rcomp
 brew install --cask open-southeners/tap/container-app
@@ -99,12 +101,14 @@ problems with installation or with a formula or cask definition.
 Before submitting a change, run the relevant Homebrew checks:
 
 ```sh
+brew audit --strict --online open-southeners/tap/ki
 brew audit --strict --online open-southeners/tap/lambdary
 brew audit --strict --online open-southeners/tap/rcomp
 brew audit --strict --online --cask open-southeners/tap/container-app
 brew audit --strict --online --cask open-southeners/tap/file-assoc-manager
 brew audit --strict --online --cask open-southeners/tap/gltfquicklook
 brew audit --strict --online --cask open-southeners/tap/rcomp
+brew test open-southeners/tap/ki
 brew test open-southeners/tap/lambdary
 brew test open-southeners/tap/rcomp
 ```

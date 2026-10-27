@@ -10,6 +10,15 @@ packages:
       - lambdary_{version}_linux_amd64.tar.gz
       - lambdary_{version}_linux_arm64.tar.gz
 
+  ki:
+    repository: open-southeners/ki
+    file: Formula/ki.rb
+    tag_prefix: v
+    update: binary_formula
+    assets:
+      - ki_{version}_darwin_amd64.tar.gz
+      - ki_{version}_darwin_arm64.tar.gz
+
   rcomp-formula:
     repository: open-southeners/rcomp
     file: Formula/rcomp.rb
